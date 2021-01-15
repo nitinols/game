@@ -16,7 +16,7 @@ pygame.time.set_timer(SPAWNENEMI, 1000)
 
 SPAWNENEMIBOSS = pygame.USEREVENT + 1
 pygame.time.set_timer(SPAWNENEMI, 10000)
-
+YELLOW = (255, 255, 0)
 
 def terminate():
     pygame.mixer.quit()
@@ -157,15 +157,15 @@ def start_screen():
         pygame.display.flip()
         clock.tick(FPS)
 
-class Enemi():
+class Enemi(Sprite):
     def __init__(self, hp, sp, damag, pos, x, y):
         super().__init__(enemy_group)
         self.hp = hp
         self.speed = sp
         self.damag = damag
-        self.sizen = 30, 50
+        self.sizen = 90, 150
 
-        self.image = pygame.transform.scale(load_image("fon2.png"), self.sizen)
+        self.image = pygame.transform.scale(load_image("monstr2.png"), self.sizen)
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = pos
         self.rect.x = x
@@ -188,6 +188,22 @@ tile_width = 60
 tile_height = 100
 
 
+class Bullet(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        pygame.sprite.Sprite.__init__(self)
+        self.image = pygame.Surface((10, 20))
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect()
+        self.rect.bottom = y
+        self.rect.centerx = x
+        self.speedy = -10
+
+    def update(self):
+        self.rect.y += self.speedy
+        # убить, если он заходит за верхнюю часть экрана
+        if self.rect.bottom < 0:
+            self.kill()
+
 class Player(Sprite):
     def __init__(self, pos_x, pos_y):
         super().__init__(hero_group)
@@ -196,6 +212,7 @@ class Player(Sprite):
         self.rect = self.image.get_rect().move(
             tile_width * pos_x + 15, tile_height * pos_y + 5)
         self.pos = (pos_x, pos_y)
+        print('-------')
 
     def move(self, x, y):
         self.pos = (x, y)
@@ -209,6 +226,15 @@ class Player(Sprite):
             pygame.mixer.quit()
             pygame.mixer.init()
 
+    def shoot(self):
+        bullet = Bullet(self.rect.centerx, self.rect.top)
+        all_sprites.add(bullet)
+        bullets.add(bullet)
+
+
+
+
+bullets = pygame.sprite.Group()
 start_screen()
 pygame.mixer.quit()
 pygame.mixer.init()
@@ -223,9 +249,12 @@ while running:
         create_arrow(pygame.mouse.get_pos())
         if event.type == pygame.QUIT or hero.heath <= 0:
             running = False
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_SPACE:
+                hero.shoot()
         if event.type == SPAWNENEMI:
-            enem = Enemi(200, 2, 8, (1200, 50), 1200, 50)
-
+            enem = Enemi(200, 2, 8, (100, 600), 100, 500)
+    
 
     keys = pygame.key.get_pressed()
     x, y = hero.pos
